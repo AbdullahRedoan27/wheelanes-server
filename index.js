@@ -3,7 +3,8 @@ const cors = require("cors");
 const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { query } = require("express");
 
 app.use(cors());
 app.use(express.json());
@@ -25,7 +26,7 @@ function run() {
         res.send(result);
     })
 
-    app.get('/users', async(req, res)=> {image.png
+    app.get('/users', async(req, res)=> {
         const email = req.query.email;
         console.log(email);
         const query = {email:email};
@@ -37,6 +38,21 @@ function run() {
         const car = req.body;
         const result = await carsCollection.insertOne(car);
         res.send(result);
+    })
+
+    app.get('/dashboard/myProducts', async(req, res) => {
+        const email = req.query.email;
+        const query = {sellerEmail: email}
+        const result = await carsCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.get('/dashboard/productDetails/:id', async(req, res) => {
+        const id = req.params.id;
+        console.log(id);
+        const query = {_id: ObjectId(id)};
+        const result =await carsCollection.findOne(query);
+        res.send(result)
     })
 
   } 
