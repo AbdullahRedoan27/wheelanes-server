@@ -35,6 +35,43 @@ function run() {
         res.send(cursor);
     })
 
+    app.delete('/deleteuser', async(req, res)=> {
+        const id = req.query.id;
+        const query = {_id: ObjectId(id)};
+        const result = await usersCollection.deleteOne(query);
+        res.send(result)
+    })
+
+    app.put('/makeadmin', async(req, res)=> {
+        const id = req.query.id;
+        const query = {_id: ObjectId(id)};
+        updatedDoc={
+            $set:{
+                role: "Admin"
+            }
+        }
+        const result = await usersCollection.updateOne(query, updatedDoc);
+        res.send(result)
+    })
+
+    app.get('/alluser', async(req, res) => {
+        const query = {};
+        const result = await usersCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.get('/allseller', async(req, res) => {
+        const query = {role: 'Seller'};
+        const result = await usersCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.get('/allbuyer', async(req, res) => {
+        const query = {role: 'Buyer/User'};
+        const result = await usersCollection.find(query).toArray();
+        res.send(result);
+    })
+
     app.get('/allProducts', async(req, res) => {
         const query = {};
         const result = await carsCollection.find(query).toArray();
