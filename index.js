@@ -20,6 +20,7 @@ function run() {
   const carsCollection = client.db('4wheelanes').collection('cars');
   const categoriesCollection = client.db('4wheelanes').collection('carCategories')
   const reportedProductsCollection = client.db('4wheelanes').collection('reportedProducts')
+  const ordersCollection = client.db('4wheelanes').collection('orders')
 
   try {
     app.post('/users', async(req, res)=> {
@@ -54,6 +55,12 @@ function run() {
         res.send(result)
     })
 
+    app.post('/dashboard/addOrder', async(req, res)=> {
+        const order = req.body;
+        const result = await ordersCollection.insertOne(order);
+        res.send(result);
+    })
+
     app.get('/alluser', async(req, res) => {
         const query = {};
         const result = await usersCollection.find(query).toArray();
@@ -81,8 +88,9 @@ function run() {
         app.get('/products/:category', async(req, res) => {
         const category = req.params.category;
         const query = {category: category,
-                        status: 'Available'};
-        const result = await carsCollection.find(query).toArray();
+            status: 'Available'};
+            const result = await carsCollection.find(query).toArray();
+            console.log(result);
         res.send(result)
     })
 
@@ -107,7 +115,6 @@ function run() {
 
     app.get('/dashboard/productDetails/:id', async(req, res) => {
         const id = req.params.id;
-        console.log(id);
         const query = {_id: ObjectId(id)};
         const result =await carsCollection.findOne(query);
         res.send(result)
@@ -173,15 +180,6 @@ function run() {
         const result = await reportedProductsCollection.find(query).toArray();
         res.send(result);
     })
-
-    app.delete('/dashboard/removeitem', async(req, res) => {
-        const id = req.query.id;
-        const filter = {_id:ObjectId(id)};
-        const result = await reportedProductsCollection.deleteOne(filter);
-        console.log(result);
-        res.send(result);
-    })
-
   } 
   catch {}
 }
