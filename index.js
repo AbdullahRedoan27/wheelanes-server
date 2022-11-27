@@ -19,6 +19,7 @@ function run() {
   const usersCollection = client.db('4wheelanes').collection('users');
   const carsCollection = client.db('4wheelanes').collection('cars');
   const categoriesCollection = client.db('4wheelanes').collection('carCategories')
+  const reportedProductsCollection = client.db('4wheelanes').collection('reportedProducts')
 
   try {
     app.post('/users', async(req, res)=> {
@@ -29,7 +30,6 @@ function run() {
 
     app.get('/users', async(req, res)=> {
         const email = req.query.email;
-        console.log(email);
         const query = {email:email};
         const cursor =await usersCollection.findOne(query);
         res.send(cursor);
@@ -86,6 +86,12 @@ function run() {
         res.send(result)
     })
 
+    app.post('/reportProduct', async(req, res) => {
+        const product = req.body;
+        const result =await reportedProductsCollection.insertOne(product);
+        res.send(result)
+    })
+
     app.post('/sellCar', async(req, res) => {
         const car = req.body;
         const result = await carsCollection.insertOne(car);
@@ -101,6 +107,7 @@ function run() {
 
     app.get('/dashboard/productDetails/:id', async(req, res) => {
         const id = req.params.id;
+        console.log(id);
         const query = {_id: ObjectId(id)};
         const result =await carsCollection.findOne(query);
         res.send(result)
@@ -108,7 +115,6 @@ function run() {
 
     app.put('/changeStatus', async(req, res) => {
         const id = req.query.id
-        console.log(id);
         const query = {_id: ObjectId(id)}
         const options = {upsert: true};
         const updatedDoc = {
@@ -136,11 +142,9 @@ function run() {
 
     app.put('/updateCarDetails', async(req, res)=>{
         const id = req.query.id;
-        console.log(id);
         const query = {_id: ObjectId(id)};
         const updatedCarDetails = req.body;
         const options = {upsert:true}
-        const carDetails = await carsCollection.findOne(query);
         const updatedDoc = {
             $set:{
                 carName: updatedCarDetails?.carName,
@@ -161,6 +165,20 @@ function run() {
     app.get('/categories', async(req, res) => {
         const query = {};
         const result = await categoriesCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.get('/dashboard/reportedItems', async(req, res)=>{
+        const query = {};
+        const result = await reportedProductsCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.delete('/dashboard/removeitem', async(req, res) => {
+        const id = req.query.id;
+        const filter = {_id:ObjectId(id)};
+        const result = await reportedProductsCollection.deleteOne(filter);
+        console.log(result);
         res.send(result);
     })
 
