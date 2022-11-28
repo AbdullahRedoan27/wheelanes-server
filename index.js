@@ -57,9 +57,46 @@ function run() {
 
     app.post('/dashboard/addOrder', async(req, res)=> {
         const order = req.body;
+        delete order._id;
         const result = await ordersCollection.insertOne(order);
         res.send(result);
     })
+
+    app.get('/order', async(req, res) => {
+        const id = req.query.id;
+        console.log(id);
+        const query = {_id: ObjectId(id)};
+        const result = await ordersCollection.findOne(query);
+        res.send(result);
+    })
+
+    app.get('/dashboard/myorders', async(req, res) => {
+        const email = req.query.email;
+        const query = {buyerEmail : email};
+        const result = await ordersCollection.find(query).toArray();
+        res.send(result);
+        
+    })
+
+
+    app.delete('/dashboard/deleteorder/:id', async (req, res) => {
+        const id = req.params.id;
+        console.log(id);
+        const filter = {_id: ObjectId(id)};
+        const result = await ordersCollection.deleteOne(filter);
+        res.send(result);
+    })
+
+
+
+    // app.delete('/dashboard/deleteorder', async(req, res)=> {
+    //     const id = req.query.id;
+    //     console.log(id);
+    //     const query = {_id: ObjectId(id)}
+    //     const result = await ordersCollection.deleteOne(query);
+    //     console.log(result);
+    //     res.send(result);
+    // })
 
     app.get('/alluser', async(req, res) => {
         const query = {};
