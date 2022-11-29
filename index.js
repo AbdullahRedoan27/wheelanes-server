@@ -87,17 +87,6 @@ function run() {
         res.send(result);
     })
 
-
-
-    // app.delete('/dashboard/deleteorder', async(req, res)=> {
-    //     const id = req.query.id;
-    //     console.log(id);
-    //     const query = {_id: ObjectId(id)}
-    //     const result = await ordersCollection.deleteOne(query);
-    //     console.log(result);
-    //     res.send(result);
-    // })
-
     app.get('/alluser', async(req, res) => {
         const query = {};
         const result = await usersCollection.find(query).toArray();
@@ -173,7 +162,29 @@ function run() {
                 status: "Sold"
             }
         }
-        const result = await carsCollection.updateMany(query, updatedDoc, options)
+        const result = await carsCollection.updateOne(query, updatedDoc, options)
+        res.send(result)
+    })
+
+    app.patch('/advertiseproduct/:id', async(req, res) => {
+        const id = req.params.id
+        console.log(id);
+        const query = {_id: ObjectId(id)}
+        const updatedDoc = {
+            $set: {
+                advertise: true
+            }
+        }
+        const result = await carsCollection.updateOne(query, updatedDoc)
+        res.send(result)
+    })
+
+    app.get('/advertisedProducts', async(req, res)=> {
+        const query = {
+            advertise : true,
+            status: "Available"
+        }
+        const result = await carsCollection.find(query).toArray();
         res.send(result)
     })
 
