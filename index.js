@@ -5,9 +5,29 @@ require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { query } = require("express");
+const jwt = require('jsonwebtoken');
 
 app.use(cors());
 app.use(express.json());
+
+function verifyJWT(req, res, next) {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send('unauthorized access');
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+
+}
 
 function run() {
   const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.zpaqsgt.mongodb.net/?retryWrites=true&w=majority`;
@@ -22,7 +42,38 @@ function run() {
   const reportedProductsCollection = client.db('4wheelanes').collection('reportedProducts')
   const ordersCollection = client.db('4wheelanes').collection('orders')
 
+  const verifyAdmin = async (req, res, next) => {
+    const decodedEmail = req.decoded.email;
+    const query = { email: decodedEmail };
+    const user = await usersCollection.findOne(query);
+
+    if (user?.role !== 'admin') {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next();
+}
+
   try {
+
+    app.get('/jwt', async (req, res) => {
+        const email = req.query.email;
+        console.log(email);
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        if (user) {
+            const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, { expiresIn: '2h' })
+            return res.send({ wheelanesToken: token });
+        }
+        res.status(403).send({ wheelanesToken: '' })
+    });
+
+    app.get('/users/admin/:email', async (req, res) => {
+        const email = req.params.email;
+        const query = { email }
+        const user = await usersCollection.findOne(query);
+        res.send({ isAdmin: user?.role === 'Admin' });
+    })
+
     app.post('/users', async(req, res)=> {
         const user = req.body;
         const result = await usersCollection.insertOne(user);
@@ -217,7 +268,8 @@ function run() {
                 usingPeriod: updatedCarDetails?.usingPeriod,
                 quality: updatedCarDetails?.quality,
                 originalPrice: updatedCarDetails?.originalPrice,
-                resalePrice: updatedCarDetails?.resalePrice
+                resalePrice: updatedCarDetails?.resalePrice,
+                sellerVerified: updatedCarDetails. sellerVerified
             }
         }
         const result = await carsCollection.updateOne(query, updatedDoc, options)
@@ -233,6 +285,19 @@ function run() {
     app.get('/dashboard/reportedItems', async(req, res)=>{
         const query = {};
         const result = await reportedProductsCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.put('/verify', async(req, res) => {
+        const id = req.query.id;
+        const query = {_id : ObjectId(id)};
+        const options = {upsert:true}
+        const updatedDoc = {
+            $set:{
+                verified: true
+            }
+        }
+        const result = await usersCollection.updateOne(query, updatedDoc, options);
         res.send(result);
     })
   } 
