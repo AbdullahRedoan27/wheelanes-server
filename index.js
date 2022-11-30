@@ -16,6 +16,8 @@ function verifyJWT(req, res, next) {
     return res.status(401).send("unauthorized access");
   }
 
+  console.log(authHeader);
+
   const token = authHeader.split(" ")[1];
 
   jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
@@ -43,18 +45,6 @@ function run() {
     .db("4wheelanes")
     .collection("reportedProducts");
   const ordersCollection = client.db("4wheelanes").collection("orders");
-
-//   const verifyAdmin = async (req, res, next) => {
-//     verifyJWT();
-//     const decodedEmail = req.decoded.email;
-//     const query = { email: decodedEmail };
-//     const user = await usersCollection.findOne(query);
-
-//     if (user?.role !== "Admin") {
-//       return res.status(403).send({ message: "forbidden access" });
-//     }
-//     next();
-//   };
 
   try {
     app.get("/jwt", async (req, res) => {
@@ -197,7 +187,18 @@ function run() {
 
     app.post("/reportProduct", async (req, res) => {
       const product = req.body;
+      delete product._id;
       const result = await reportedProductsCollection.insertOne(product);
+      res.send(result);
+    });
+
+    app.delete("/deleteReportedProduct", async (req, res) => {
+      const productId = req.query.id;
+      console.log(productId);
+      const query = { _id: ObjectId(productId)};
+      const reportedquery = {productId: productId};
+      const result = await carsCollection.deleteOne(query);
+      const result2 = await reportedProductsCollection.deleteOne(reportedquery);
       res.send(result);
     });
 
